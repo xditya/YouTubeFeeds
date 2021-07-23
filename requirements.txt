@@ -1,0 +1,4 @@
+telethon
+python-decouple
+feedparser
+redis
