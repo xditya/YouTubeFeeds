@@ -7,7 +7,7 @@ Send notification to your telegram group/channel/private whenever a new video is
 - `REDIS_PASSWORD` - Redis Database Password.
 - `CHANNEL_ID` - YouTube channel id, eg: UCykFIBKkj5ce3SggtaYSwtQ
 - `CHATS` - Chat id(s) split by space, to send notifications to.
-- `TIME_DELAY` - Interval between checks, in seconds. defaulted as 86400 (24hrs) 
+- `TIME_DELAY` - Interval between checks, in seconds. defaulted as 7200 (2hrs) 
 
 ## Deploying
 This can be deployed to any platform.

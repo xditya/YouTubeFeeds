@@ -25,7 +25,7 @@ try:
     redis_pass = config("REDIS_PASSWORD", default=None)
     channelid = config("CHANNEL_ID", default=None)
     chats = [int(x) for x in config("CHATS").split()]
-    check_time = config("TIME_DELAY", cast=int, default=86400)
+    check_time = config("TIME_DELAY", cast=int, default=7200)
 except:
     logging.warning("Environment vars are missing! Kindly recheck.")
     logging.info("Bot is quiting...")
@@ -51,6 +51,7 @@ async def get_updates():
                 )
             )
             feed = feed_.entries[0]
+            pic = "https://img.youtube.com/vi/{}/hqdefault.jpg".format(feed.yt_videoid)
             prev_ = redis_db.get("LAST_POST") or ""
             if feed.link != prev_:
                 msg = "**New Video Uploaded to** [YouTube](https://www.youtube.com/channel/{})!\n\n".format(
@@ -60,16 +61,19 @@ async def get_updates():
                 link = feed.link
                 redis_db.set("LAST_POST", link)
                 try:
-                    await sendMessage(msg, buttons=Button.url("Watch Now!", url=link))
+                    await sendMessage(
+                        msg, pic, buttons=Button.url("Watch Now!", url=link)
+                    )
                     await asyncio.sleep(check_time)
                 except Exception as e:
                     logging.warning(e)
-                    return
 
 
-async def sendMessage(msg, buttons=None):
+async def sendMessage(msg, pic=None, buttons=None):
     for i in chats:
         try:
+            await bot.send_message(i, msg, file=pic, buttons=buttons)
+        except ValueError:
             await bot.send_message(i, msg, buttons=buttons)
         except Exception as e:
             logging.warning(e)

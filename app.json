@@ -31,7 +31,7 @@
             "required": true
         },
         "TIME_DELAY": {
-            "description": "Delay to re-check for new videos, in seconds. Leave blank to keep it default, i.e., 24hours.",
+            "description": "Delay to re-check for new videos, in seconds. Leave blank to keep it default, i.e., 2hours.",
             "value": "",
             "required": false
         }
