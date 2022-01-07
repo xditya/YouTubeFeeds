@@ -23,7 +23,7 @@ with open('config.json') as json_file:
     check_time = config["check_time"]
 
 with open('bot.secret', 'r') as file:
-    bottoken = file.read()
+    bottoken = file.read().replace("\n","")
 
 # start the bot
 logging.info("Starting...")
@@ -53,7 +53,7 @@ async def get_updates():
             video_list = current_feed.entries # extract the list of videos.
             latest_video = video_list[0] # latest video
             print(len(video_list))
-            print(latest_video)
+            #print(latest_video)
             pic = "https://img.youtube.com/vi/{}/hqdefault.jpg".format(latest_video.yt_videoid)
             #prev_ = redis_db.get("LAST_POST") or ""
             if latest_video.link != prev_:
