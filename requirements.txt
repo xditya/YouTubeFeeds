@@ -2,3 +2,4 @@ telethon
 python-decouple
 feedparser
 redis
+requests

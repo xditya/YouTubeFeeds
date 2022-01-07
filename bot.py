@@ -3,10 +3,11 @@
 
 import logging
 from telethon import TelegramClient, Button
-from decouple import config
+#from decouple import config
 from feedparser import parse
-from helpers import get_redis
 import asyncio
+import requests
+import json
 
 logging.basicConfig(
     format="[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s", level=logging.INFO
@@ -14,24 +15,20 @@ logging.basicConfig(
 
 bottoken = None
 
+with open('config.json') as json_file:
+    config = json.load(json_file)
+    #bottoken = config["bot_token"]
+    channelid = config["channel_id"][0]["id"] #### treat all of them!
+    chats = config["chats"]
+    check_time = config["check_time"]
+
+with open('bot.secret', 'r') as file:
+    bottoken = file.read()
+
 # start the bot
 logging.info("Starting...")
 apiid = 6
 apihash = "eb06d4abfb49dc3eeb1aeb98ae0f581e"
-
-try:
-    bottoken = config("BOT_TOKEN")
-    redis_url = config("REDIS_URL", default=None)
-    redis_pass = config("REDIS_PASSWORD", default=None)
-    channelid = config("CHANNEL_ID", default=None)
-    chats = [int(x) for x in config("CHATS").split()]
-    check_time = config("TIME_DELAY", cast=int, default=7200)
-except:
-    logging.warning("Environment vars are missing! Kindly recheck.")
-    logging.info("Bot is quiting...")
-    exit()
-
-redis_db = get_redis(redis_url, redis_pass)
 
 try:
     bot = (TelegramClient(None, apiid, apihash).start(bot_token=bottoken)).start()
@@ -42,31 +39,34 @@ except Exception as e:
 
 
 async def get_updates():
+    prev_ = ""
     async with bot:
-        await sendMessage("Started.")
+        await sendMessage("Miau!\nIch bin gerade aufgewacht.\nFalls ich mal spontan einschlafe, wirst du es nicht merken.")
         while True:
-            feed_ = parse(
-                "https://www.youtube.com/feeds/videos.xml?channel_id={}".format(
-                    channelid
-                )
-            )
-            feed = feed_.entries[0]
-            pic = "https://img.youtube.com/vi/{}/hqdefault.jpg".format(feed.yt_videoid)
-            prev_ = redis_db.get("LAST_POST") or ""
-            if feed.link != prev_:
-                msg = "**New Video Uploaded to** [YouTube](https://www.youtube.com/channel/{})!\n\n".format(
-                    channelid
-                )
-                msg += f"**{feed.title}**\n\n"
-                link = feed.link
-                redis_db.set("LAST_POST", link)
+            current_feed = parse("https://www.youtube.com/feeds/videos.xml?channel_id={}&max-results=50".format(channelid)) # download some page containing list of all videos an dother stuff
+
+            if len(current_feed.entries) == 0:
+                print("Found empty entries array:\n")#{}".format(current_feed.entries))
+            else:
+                print("Found non-empty entries array:\n")#{}".format(current_feed.entries))
+
+            video_list = current_feed.entries # extract the list of videos.
+            latest_video = video_list[0] # latest video
+            print(len(video_list))
+            print(latest_video)
+            pic = "https://img.youtube.com/vi/{}/hqdefault.jpg".format(latest_video.yt_videoid)
+            #prev_ = redis_db.get("LAST_POST") or ""
+            if latest_video.link != prev_:
+                msg = "**Miau!\nIch hab Hunger, denn meine Futterbeauftragte hat schon wieder nichts besseres zu tun als einen Livestream zu starten anstatt Futter zu besorgen:**\nIhr Kanal: https://www.youtube.com/channel/{}\n\n".format(channelid)
+                msg += f"**{latest_video.title}**\n{latest_video.link}\n"
+                link = latest_video.link
+                prev_ = link #redis_db.set("LAST_POST", link)
                 try:
-                    await sendMessage(
-                        msg, pic, buttons=Button.url("Watch Now!", url=link)
-                    )
-                    await asyncio.sleep(check_time)
+                    await sendMessage(msg, pic, buttons=Button.url("Livestream jetzt anschauen", url=link))
                 except Exception as e:
                     logging.warning(e)
+            await asyncio.sleep(check_time)
+
 
 
 async def sendMessage(msg, pic=None, buttons=None):

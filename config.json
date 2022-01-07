@@ -1,0 +1,16 @@
+{
+  "channel_id": [
+    {
+      "id": "UCoA9xkGtbaBNElo2iiejArQ",
+      "name": "Carolin Matthie Reisekanal"
+    },
+    {
+      "id": "UCHNVmVDguYH5EiKdC_EFcDQ",
+      "name": "Carolin Matthie Hauptkanal"
+    }
+  ],
+  "chats": [
+    "yunas_notifications"
+  ],
+  "check_time": 50
+}
