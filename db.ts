@@ -2,7 +2,7 @@ import config from "./env.ts";
 
 import { connect } from "redis";
 
-export const redis = await connect({
+const redis = await connect({
   hostname: config.REDIS_URI.split(":")[0],
   port: config.REDIS_URI.split(":")[1],
   password: config.REDIS_PASSWORD,
@@ -18,11 +18,15 @@ export async function addFeed(chatID: number, channelID: string) {
   if (!allFeeds[channelID]) {
     allFeeds[channelID] = [];
   }
+  let res = false;
   if (!allFeeds[channelID].includes(chatID)) {
     allFeeds[channelID].push(chatID);
+    res = true;
   }
   await redis.set("FEEDS", JSON.stringify(allFeeds));
+  return res;
 }
+
 export async function removeFeed(chatID: number, channelID: string) {
   const allFeeds = await getAllFeeds();
   if (allFeeds[channelID]) {

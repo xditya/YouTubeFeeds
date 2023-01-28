@@ -33,6 +33,23 @@ for (const owner of config.OWNERS.split(" ")) {
   OWNERS.push(parseInt(owner));
 }
 
+async function matchChannelId(userName: string) {
+  const url = "https://www.youtube.com/" + userName;
+
+  const res = await fetch(url);
+  const text = await res.text();
+  const reg = new RegExp(
+    `<meta itemprop="channelId" content=\"(.*)\"><span itemprop="author"`,
+  );
+  const regRes = reg.exec(text);
+  if (!regRes || regRes.length < 2) {
+    return null;
+  }
+  return regRes[1];
+}
+const errorMsg =
+  "Please provide a channel link or username.\nEg: - `/add https://www.youtube.com/channel/UCykFIBKkj5ce3SggtaYSwtQ`\n- `/add @xditya`";
+
 bot.command("start", async (ctx) => {
   await ctx.reply(
     `
@@ -60,37 +77,62 @@ Please deploy your own instance of the bot to use it. Find the repository in the
 bot
   .filter((ctx) => OWNERS.includes(ctx.from!.id))
   .command("add", async (ctx) => {
-    const channelLink = ctx.message!.text!.split(" ")[1];
-    if (!channelLink) {
+    const channelLinkOrUserName = ctx.message!.text!.split(" ")[1];
+    let channelLink;
+    if (!channelLinkOrUserName) {
       await ctx.reply(
-        "Please provide a channel ID.\nEg: `/add https://www.youtube.com/channel/UCykFIBKkj5ce3SggtaYSwtQ`",
+        errorMsg,
         { parse_mode: "Markdown" },
       );
       return;
     }
-    const channelID = channelLink.split("/").pop();
-    if (!channelID) {
-      await ctx.reply(
-        "Please provide a valid channel ID.\nEg: `/add https://www.youtube.com/channel/UCykFIBKkj5ce3SggtaYSwtQ`",
-        { parse_mode: "Markdown" },
-      );
-      return;
+    let channelId;
+    if (!channelLinkOrUserName.startsWith("@")) {
+      channelId = channelLinkOrUserName.split("/").pop();
+      if (!channelId) {
+        await ctx.reply(
+          errorMsg,
+          { parse_mode: "Markdown" },
+        );
+        return;
+      }
+      channelLink = channelLinkOrUserName;
+    } else {
+      const res = await matchChannelId(channelLinkOrUserName);
+      if (res == null) {
+        await ctx.reply(
+          errorMsg,
+          { parse_mode: "Markdown" },
+        );
+        return;
+      }
+      channelId = res;
+      channelLink = "https://youtube.com/" + channelLinkOrUserName;
     }
     try {
       const resp = await fetch(
-        "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelID,
+        "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelId,
       );
       const data = await parseFeed(await resp.text());
-      await ctx.reply(
-        `Added "<a href="${channelLink}">${
-          data.title.value ?? "channel"
-        }</a>" to the current chat. New video notifications would be posted here!`,
-        { parse_mode: "HTML" },
-      );
-      await addFeed(ctx.chat!.id, channelID);
+      const r = await addFeed(ctx.chat!.id, channelId);
+      if (r) {
+        await ctx.reply(
+          `Added "<a href="${channelLink}">${
+            data.title.value ?? "channel"
+          }</a>" to the current chat. New video notifications would be posted here!`,
+          { parse_mode: "HTML" },
+        );
+      } else {
+        await ctx.reply(
+          `Notifications from "<a href="${channelLink}">${
+            data.title.value ?? "channel"
+          }</a>" are already enabled in this chat!`,
+          { parse_mode: "HTML" },
+        );
+      }
     } catch {
       await ctx.reply(
-        "Please provide a valid channel ID.\nEg: `/add https://www.youtube.com/channel/UCykFIBKkj5ce3SggtaYSwtQ`",
+        errorMsg,
         { parse_mode: "Markdown" },
       );
       return;
