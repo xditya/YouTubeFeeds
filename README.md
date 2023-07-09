@@ -37,7 +37,7 @@ video is uploaded by your favourite YouTube creator(s)!
 # What's New?
 
 Other than the bot supporting the new YouTube username feature, one deployed bot
-can now be used in multiple telegram to get notifications from multiple YouTube
+can now be used in multiple telegram chats to get notifications from multiple YouTube
 channels (unlike what it was before).
 
 # Support Me
