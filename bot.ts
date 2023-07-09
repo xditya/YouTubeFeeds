@@ -39,7 +39,7 @@ async function matchChannelId(userName: string) {
   const res = await fetch(url);
   const text = await res.text();
   const reg = new RegExp(
-    `<meta itemprop="channelId" content=\"(.*)\"><span itemprop="author"`,
+    `"externalId":\"(.*)\","keywords"`,
   );
   const regRes = reg.exec(text);
   if (!regRes || regRes.length < 2) {
