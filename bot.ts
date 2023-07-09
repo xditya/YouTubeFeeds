@@ -223,6 +223,6 @@ async function postFeeds() {
 }
 
 // Run Job in every 15 minutes
-cron("1 */15 * * * *", () => {
+cron("1 */30 * * * *", () => {
   postFeeds();
 });
